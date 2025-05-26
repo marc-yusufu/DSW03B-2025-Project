@@ -1,0 +1,32 @@
+.input-group {
+  margin-bottom: 1rem;
+}
+
+.input-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.input-wrapper {
+  display: flex;
+}
+
+.input-box {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #e5e5e5;
+}
+
+.input-button {
+  margin-left: 0.5rem;
+  background-color: #2e6cf6;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
