@@ -1,9 +1,22 @@
 import React, { useState } from "react";
 import "./InputFields.css"
 
-const InputField = ({ label, buttonLabel, type = "text", placeholder, onButtonClick }) => {
-  const [inputValue, setInputValue] = useState("");
+type InputFieldProps = {
+  label?: string;
+  buttonLabel?: string;
+  type?: string;
+  placeholder?: string;
+  onButtonClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+};
 
+const InputField = ({
+  label = "text",
+  buttonLabel = "text",
+  type = "text",
+  placeholder = "text",
+  onButtonClick,
+}: InputFieldProps) => {
+  const [inputValue, setInputValue] = useState("");
   return (
     <div className="input-group">
       <label className="input-label">{label}</label>
@@ -24,6 +37,8 @@ const InputField = ({ label, buttonLabel, type = "text", placeholder, onButtonCl
       
     </div>
   );
+  // ... rest of your JSX
 };
+
 
 export default InputField;
