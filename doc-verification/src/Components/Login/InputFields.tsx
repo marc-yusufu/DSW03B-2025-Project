@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./InputField.css";
+import "./InputFields.css"
 
 const InputField = ({ label, buttonLabel, type = "text", placeholder, onButtonClick }) => {
   const [inputValue, setInputValue] = useState("");

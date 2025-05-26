@@ -1,7 +1,7 @@
 
 import React from "react";
-import "./LoginPage.css";
-import InputField from "./InputField";
+import "./LoginPage.css"
+import InputField from "./InputFields";
 import { Link } from "react-router-dom";
 
 const LoginPage = () => (

@@ -1,6 +1,6 @@
 import React from 'react';
-import './RegisterPage.css';
-import InputField from './InputField';
+import "./RegisterPage.css"
+import InputField from '../Login/InputFields';
 import { Link } from 'react-router-dom';
 
 const RegisterPage = () => (
