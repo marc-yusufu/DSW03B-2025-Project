@@ -1,4 +1,4 @@
-import { useState, useRef, type RefObject } from "react"
+import { useState, useRef, type RefObject } from "react";
 import NavBarHome from "../Common/NavBarHome";
 import Footer from "../Common/Footer";
 import Switch from "react-switch";
@@ -30,15 +30,14 @@ export default function SettingPage(){
         }));
     }
 
-    const section1 = useRef<HTMLDivElement>(null);
-    const section2 = useRef<HTMLDivElement>(null);
-    const section3 = useRef<HTMLDivElement>(null);
-    const section4 = useRef<HTMLDivElement>(null);
-    const section5 = useRef<HTMLDivElement>(null);
-    const section6 = useRef<HTMLDivElement>(null);
+    const section1 = useRef<HTMLDivElement | null>(null);
+    const section2 = useRef<HTMLDivElement | null>(null);
+    const section3 = useRef<HTMLDivElement | null>(null);
+    const section4 = useRef<HTMLDivElement | null>(null);
+    const section5 = useRef<HTMLDivElement | null>(null);
 
-    function handleScroll(ref: RefObject<HTMLDivElement>){
-        ref.current?.scroll({behavior: "smooth"})
+    const handleScroll = (ref: RefObject<HTMLDivElement | null>) => {
+        ref.current?.scrollIntoView({ behavior: "smooth" });
     }
 
     return(
@@ -55,39 +54,39 @@ export default function SettingPage(){
                     </div>
 
                     <div className="w-full mt-10">
-                        <a className="flex flex-row p-2 items-center hover:border-1 hover:cursor-default active:scale-95 transition-transform duration-100 rounded-lg">
+                        <button onClick={()=>{handleScroll(section1)}} className="w-full flex flex-row p-2 items-center hover:border-1 hover:cursor-default active:scale-95 transition-transform duration-100 rounded-lg">
                             <img src="/images/user (2).png" alt="" className="size-4 mr-3"/>
                             <p>Account Settings</p>
-                        </a>
+                        </button>
 
-                        <a className="flex flex-row p-2 items-center hover:border-1 hover:cursor-default active:scale-95 transition-transform duration-100 rounded-lg">
+                        <button onClick={()=>{handleScroll(section2)}} className="w-full flex flex-row p-2 items-center hover:border-1 hover:cursor-default active:scale-95 transition-transform duration-100 rounded-lg">
                             <img src="/images/lock.png" alt="" className="size-4 mr-3"/>
                             <p>Security Settings</p>
-                        </a>
+                        </button>
 
-                        <a className="flex flex-row p-2 items-center hover:border-1 hover:cursor-default active:scale-95 transition-transform duration-100 rounded-lg">
+                        <button onClick={()=>{handleScroll(section3)}} className="w-full flex flex-row p-2 items-center hover:border-1 hover:cursor-default active:scale-95 transition-transform duration-100 rounded-lg">
                             <img src="/images/bell.png" alt="" className="size-4 mr-3"/>
                             <p>Notification Preferences</p>
-                        </a>
+                        </button>
 
-                        <a className="flex flex-row p-2 items-center hover:border-1 hover:cursor-default active:scale-95 transition-transform duration-100 rounded-lg">
+                        <button className="w-full flex flex-row p-2 items-center hover:border-1 hover:cursor-default active:scale-95 transition-transform duration-100 rounded-lg">
                             <img src="/images/moon.png" alt="" className="size-4 mr-3"/>
                             <p>Theme</p>
-                        </a>
+                        </button>
 
-                        <a className="flex flex-row p-2 items-center hover:border-1 hover:cursor-default active:scale-95 transition-transform duration-100 rounded-lg">
+                        <button onClick={()=>{handleScroll(section4)}} className="w-full flex flex-row p-2 items-center hover:border-1 hover:cursor-default active:scale-95 transition-transform duration-100 rounded-lg">
                             <img src="/images/user-headset (2).png" alt="" className="size-4 mr-3"/>
                             <p>Support & Feeedback</p>
-                        </a>
+                        </button>
                     </div>
                 </div>
 
                 {/*Main*/}
                 <div className="w-[90%] ml-10 flex flex-col">
                     <h1 className=" ml-5 font-medium text-2xl">Account Settings</h1>
-                    <div className="border-b-1 border-b-black w-full mt-2"></div>
+                    <div className="border-b-1 border-b-black w-full mt-2" ref={section1}/>
 
-                    <div className="w-full h-full flex flex-col mt-15 ml-15">
+                    <div className="w-full h-full flex flex-col mt-15 ml-15" >
                         <label htmlFor="profilePicture" className="border-1 border-black w-[170px] h-[170px] flex justify-center items-center rounded-full" >
                             {imageUrl ? (  
                                 <img src={imageUrl} alt="selected" className="w-full h-full object-cover overflow-hidden rounded-full border-1 border-gray-400"/>
@@ -112,9 +111,9 @@ export default function SettingPage(){
                     </div>
 
                     <h1 className="mt-10 ml-5 font-medium text-2xl">Security Settings</h1>
-                    <div className="border-b-1 border-b-black w-full mt-2"></div>
+                    <div className="border-b-1 border-b-black w-full mt-2" ref={section2}/>
 
-                    <div className="w-full h-full flex flex-col mt-7 ml-15">
+                    <div className="w-full h-full flex flex-col mt-7 ml-15" id="section2">
                         <h2 className="text-[18px]">Login Activity</h2>
                         <div className="w-[80%] h-[100px] p-10 border-1 border-dashed rounded-lg text-center mt-5 mb-5">No activity</div>
                         <h2 className="text-[18px]">Session Timeout</h2>
@@ -131,7 +130,7 @@ export default function SettingPage(){
                     </div>
 
                     <h1 className="mt-10 ml-5 font-medium text-2xl">Notification Preferences</h1>
-                    <div className="border-b-1 border-b-black w-full mt-2"></div>
+                    <div className="border-b-1 border-b-black w-full mt-2"ref={section3}/>
 
                     <div className="w-[90%]  mt-5 ml-15">
                         <div className="flex flex-row w-full justify-between m-5 text-[18px]">
@@ -157,7 +156,7 @@ export default function SettingPage(){
                     </div>
 
                     <h1 className="mt-10 ml-5 font-medium text-2xl">Support & FeedBack</h1>
-                    <div className="border-b-1 border-b-black w-full mt-2"></div>
+                    <div className="border-b-1 border-b-black w-full mt-2"ref={section4}/>
 
                     <div className="w-full  mt-5 ml-15 flex flex-col">
                         <div className="flex justify-between w-[90%] flex-row mb-5">
@@ -176,7 +175,7 @@ export default function SettingPage(){
                         <h2 className="text-[18px]">Submit FeedBack</h2>
                         <input type="text" placeholder="Max 120 Characters" className=" ml-5 w-[80%] h-[100px] p-10 border-1 rounded-lg placeholder-center py-2 mt-5 mb-5"/>
                         <div className="w-[80%] flex justify-end">
-                            <button className="bg-[#3376F3] w-[110px] text-white hover:bg-blue-600 rounded-full self-end">Submit</button>
+                            <button type="submit" className="bg-[#3376F3] w-[110px] text-white hover:bg-blue-600 rounded-full self-end">Submit</button>
                         </div>
                     </div>
 
