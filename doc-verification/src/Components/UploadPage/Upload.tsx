@@ -12,7 +12,8 @@ export default function Upload(){
         if(inputRef.current){
             inputRef.current.click();
         }
-    }
+    };
+    
     return(
         <div>
             <div><NavBarHome/></div>

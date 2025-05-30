@@ -2,7 +2,7 @@
 function Footer(){
     return(
         
-        <footer className="flex bg-[#4A89FF] w-[98%] rounded-3xl h-[320px] flex-col text-white mb-10">
+        <footer className="flex bg-[#4A89FF] w-[98%] rounded-3xl h-[320px] flex-col text-white mb-5">
             <div className="flex flex-row w-full justify-around border-b-1 border-b-white">
                 <div className="flex items-center justify-center h-64">
                     <a href="">A</a>
