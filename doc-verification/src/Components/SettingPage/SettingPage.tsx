@@ -34,7 +34,6 @@ export default function SettingPage(){
     const section2 = useRef<HTMLDivElement | null>(null);
     const section3 = useRef<HTMLDivElement | null>(null);
     const section4 = useRef<HTMLDivElement | null>(null);
-    const section5 = useRef<HTMLDivElement | null>(null);
 
     const handleScroll = (ref: RefObject<HTMLDivElement | null>) => {
         ref.current?.scrollIntoView({ behavior: "smooth" });
