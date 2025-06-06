@@ -1,6 +1,9 @@
-import { useState, useRef, use } from "react"
+import { useState, useRef, createContext, useContext } from "react"
 import NavBarHome from "../Common/NavBarHome";
+import Home from "../HomePage/Home";
+import AppContext from "../Context/Context";
 
+export const fileContext = createContext("");
 
 export default function Upload(){
 
@@ -50,7 +53,7 @@ export default function Upload(){
                 </div>
 
                 <div className="border-1 rounded-lg w-[30%] bg-[#E5E5E5]">
-                     side block
+                    {/*Side block*/}
                 </div>
             </div>
 
