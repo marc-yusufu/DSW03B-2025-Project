@@ -5,11 +5,23 @@ import AppContext from "../Context/Context";
 
 export const fileContext = createContext("");
 
+type uploadedFiles = {
+    name: string;
+    lastModified: number;
+}
+
 export default function Upload(){
 
     const [fileName, setFileName] = useState("");
-    const [typeOfFile, setTypeOfFile] = useState("")
+    const [typeOfFile, setTypeOfFile] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
+    const [recentlyUploaded, setRecentlyUploaded] = useState<uploadedFiles[]>([]);
+
+    const uploadDate : Date = new Date();
+    const year = uploadDate.getFullYear();
+    const month = uploadDate.getMonth();
+    const day = uploadDate.getDay();
+    const formattedDate = `${year}/${month}/${day}`;
 
     const handleInputRef =()=>{
         if(inputRef.current){
@@ -45,15 +57,25 @@ export default function Upload(){
                     hidden = {true}
                     id="fileUpload"
                     onChange={(e)=>{
-                        const file = e.target.files?.[0];
-                        if (file){
-                            setFileName(file.name)
+                        const fileInput = e.target.files?.[0];
+                        if (fileInput){
+                            setFileName(fileInput.name);
+
+                            const recentFiles = e.target.files ? Array.from(e.target.files).map(file => ({
+                                name: file.name,
+                                lastModified: file.lastModified,
+                            })) : [];
+                            setRecentlyUploaded(prev => [...prev, ...recentFiles]);
                         }
                     }}/>
                 </div>
 
-                <div className="border-1 rounded-lg w-[30%] bg-[#E5E5E5]">
-                    {/*Side block*/}
+                <div className="border-1 rounded-lg w-[30%] bg-[#E5E5E5] p-5">
+                    <ul>
+                        {recentlyUploaded.map((file, index) => (
+                            <li key={index}>{fileName} - {formattedDate}</li>
+                        ))}
+                    </ul>
                 </div>
             </div>
 

@@ -23,7 +23,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/Home"/>}/>
+        <Route path="/" element={<Navigate to="/Upload"/>}/>
         <Route path="/Login" element={<LoginPage/>}/>
         <Route path="/Signup" element={<RegisterPage/>}/>
         <Route path="/Home" element={<Home/>}/>
