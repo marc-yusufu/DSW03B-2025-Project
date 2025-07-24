@@ -1,7 +1,6 @@
 import { useState, useRef, createContext, useContext } from "react"
 import NavBarHome from "../Common/NavBarHome";
-import Home from "../HomePage/Home";
-import AppContext from "../Context/Context";
+import { CloudUpload } from "lucide-react";
 
 export const fileContext = createContext("");
 
@@ -12,12 +11,15 @@ type uploadedFiles = {
 
 export default function Upload(){
 
+    const [file, setFile] = useState<File | null>(null);
     const [fileName, setFileName] = useState("");
+    const [fileSizeInBytes, setFileSizeInBytes] = useState<number>(0)
+    const fileSizeInMB = (fileSizeInBytes/(1024 * 1024)).toFixed(2)
     const [typeOfFile, setTypeOfFile] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
     const [recentlyUploaded, setRecentlyUploaded] = useState<uploadedFiles[]>([]);
 
-    const uploadDate : Date = new Date();
+    var uploadDate : Date = new Date();
     const year = uploadDate.getFullYear();
     const month = uploadDate.getMonth();
     const day = uploadDate.getDay();
@@ -39,18 +41,16 @@ export default function Upload(){
             </div>
             <div className=" flex justify-between flex-row w-[90%] h-[300px] mb-10">
                 <div className="w-[66%] h-full flex">
-                    <label htmlFor="fileUpload" className="border-dashed border-1 w-full rounded-lg items-center justify-center flex bg-[#C9DCFF99] hover:bg-blue-200">
-                        {fileName || 
+                    <label htmlFor="fileUpload" className="border-dashed border-1 w-full rounded-lg items-center justify-center flex flex-col bg-[#C9DCFF99] hover:bg-blue-200">
+                        <CloudUpload className="mx-auto h-10 w-10 text-gray-500 mb-2" />
+                        {fileName? (<p className="font-medium">{fileName} {fileSizeInMB}MB</p>) : (
                         <div className="flex justify-center flex-col w-full items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-8">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                            </svg>
-
-                            <p className="p-5">Max 120 MB (PNG, JPEG, PDF)</p>
-                            <p className="p-5">Drag and drop or</p>
+                            <p className="p-5 text-[14px] text-gray-500">Max 120 MB (PNG, JPEG, PDF)</p>
+                            <p className="p-2 text-[18px] font-medium">Drag and drop </p> 
+                            <p className="mb-3">or</p>
                             <button onClick={handleInputRef} className="bg-[#3376F3] w-[152px] p-2 text-white hover:bg-blue-600 rounded-lg">Browse file</button>
 
-                        </div>}
+                        </div>)}
                     </label>
                     <input type="file"
                     ref={inputRef}
@@ -60,6 +60,7 @@ export default function Upload(){
                         const fileInput = e.target.files?.[0];
                         if (fileInput){
                             setFileName(fileInput.name);
+                            setFileSizeInBytes(fileInput.size);
 
                             const recentFiles = e.target.files ? Array.from(e.target.files).map(file => ({
                                 name: file.name,
@@ -69,11 +70,11 @@ export default function Upload(){
                         }
                     }}/>
                 </div>
-
-                <div className="border-1 rounded-lg w-[30%] bg-[#E5E5E5] p-5">
-                    <ul>
+                    {/*Recent;y uploaded container*/}
+                <div className="border-1 border-gray-200 rounded-lg w-[30%] bg-[#ffffff] p-5">
+                    <ul className="text-[14px] p-2">
                         {recentlyUploaded.map((file, index) => (
-                            <li key={index}>{fileName} - {formattedDate}</li>
+                            <li key={index} className="p-4 mb-2 border-1 rounded-lg border-gray-500">{file.name} - {formattedDate}</li>
                         ))}
                     </ul>
                 </div>
