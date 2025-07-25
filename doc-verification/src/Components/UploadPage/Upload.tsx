@@ -2,6 +2,7 @@ import { useState, useRef, createContext, useContext } from "react"
 import NavBarHome from "../Common/NavBarHome";
 import { CloudUpload } from "lucide-react";
 
+
 export const fileContext = createContext("");
 
 type uploadedFiles = {
@@ -11,13 +12,21 @@ type uploadedFiles = {
 
 export default function Upload(){
 
-    const [file, setFile] = useState<File | null>(null);
+    /*for openCV resizing and denoising*/
+    const fileInputCV = document.getElementById('fileInput') as HTMLInputElement;
+    const canvasInput = document.getElementById('canvasInput') as HTMLCanvasElement;
+    const canvasOutput = document.getElementById('canvasOuput') as HTMLCanvasElement;
+    const ctxInput = canvasInput.getContext('2d');
+
+
     const [fileName, setFileName] = useState("");
     const [fileSizeInBytes, setFileSizeInBytes] = useState<number>(0)
     const fileSizeInMB = (fileSizeInBytes/(1024 * 1024)).toFixed(2)
     const [typeOfFile, setTypeOfFile] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
     const [recentlyUploaded, setRecentlyUploaded] = useState<uploadedFiles[]>([]);
+    const [uploading, setUploading] = useState(false);
+    const [result, setResult] = useState<string | null>(null);
 
     var uploadDate : Date = new Date();
     const year = uploadDate.getFullYear();
@@ -30,6 +39,29 @@ export default function Upload(){
             inputRef.current.click();
         }
     };
+
+    const handleUpload = () => {
+        setUploading(true);
+        setTimeout(() => {
+            setUploading(false);
+            setResult("Upload Completed");
+        }, 2000);
+    };
+
+    /*openCV image processing*/
+    function processImage(){
+        const src = cv.imread('canvasInput');
+        const resized = new cv.Mat();
+        const denoised = new cv.Mat();
+
+        const size = new cv.Size(300,300);
+        cv.resize(src, resized, size, 0, 0, cv.INTER_AREA);
+        cv.fastNlMeansDenoisingColored(resized, denoised, 10, 10, 7, 21);
+
+        cv.imshow('canvasOuput', denoised);
+
+        src.delete(); resized.delete(); denoised.delete();
+    }
     
     return(
         <div>
@@ -41,9 +73,14 @@ export default function Upload(){
             </div>
             <div className=" flex justify-between flex-row w-[90%] h-[300px] mb-10">
                 <div className="w-[66%] h-full flex">
-                    <label htmlFor="fileUpload" className="border-dashed border-1 w-full rounded-lg items-center justify-center flex flex-col bg-[#C9DCFF99] hover:bg-blue-200">
+                    <label htmlFor="fileUpload" className="border-dashed border-1 w-full rounded-lg items-center justify-center flex flex-col bg-[#e5efff99] hover:bg-[#e8edff]">
                         <CloudUpload className="mx-auto h-10 w-10 text-gray-500 mb-2" />
-                        {fileName? (<p className="font-medium">{fileName} {fileSizeInMB}MB</p>) : (
+                        {fileName? (
+                            <div className="flex w-full flex-col items-center">
+                                <p className="text-[#4ce303] font-bold">{uploading? <span className="text-[#2a30f9]">Uplaoding file...</span>  : result}</p>
+                                <p className="font-medium">{fileName} {fileSizeInMB}MB</p>
+                            </div>) 
+                        : (
                         <div className="flex justify-center flex-col w-full items-center">
                             <p className="p-5 text-[14px] text-gray-500">Max 120 MB (PNG, JPEG, PDF)</p>
                             <p className="p-2 text-[18px] font-medium">Drag and drop </p> 
@@ -61,6 +98,7 @@ export default function Upload(){
                         if (fileInput){
                             setFileName(fileInput.name);
                             setFileSizeInBytes(fileInput.size);
+                            handleUpload();
 
                             const recentFiles = e.target.files ? Array.from(e.target.files).map(file => ({
                                 name: file.name,
@@ -68,15 +106,50 @@ export default function Upload(){
                             })) : [];
                             setRecentlyUploaded(prev => [...prev, ...recentFiles]);
                         }
+
+                        {/*openCV section*/}
+                        const reader = new FileReader();
+
+                        reader.onload = (e) =>{
+                            const img = new Image();
+                            img.src = e.target?.result as string;
+
+                            img.onload = () =>{
+                                canvasInput.width = img.width;
+                                canvasInput.height = img.height;
+                                ctxInput?.drawImage(img,0,0);
+
+                                if(cv && cv.imread){
+                                    processImage();
+                                }else{
+                                    cv['onRuntimeInitialized'] = processImage;
+                                }
+                            };
+                        };
+                        reader.readAsDataURL(fileInputCV);
                     }}/>
                 </div>
                     {/*Recent;y uploaded container*/}
-                <div className="border-1 border-gray-200 rounded-lg w-[30%] bg-[#ffffff] p-5">
-                    <ul className="text-[14px] p-2">
-                        {recentlyUploaded.map((file, index) => (
-                            <li key={index} className="p-4 mb-2 border-1 rounded-lg border-gray-500">{file.name} - {formattedDate}</li>
-                        ))}
-                    </ul>
+                <div className="max-h-[300px] overflow-y-auto border-1 border-gray-200 rounded-lg w-[30%] bg-[#ffffff] p-5">
+                    {recentlyUploaded.length > 0 ? (
+                        <ul className="text-[14px] p-2">
+                            {recentlyUploaded.map((file, index) => (
+                                <li 
+                                    key={index}
+                                    className="p-4 mb-2 border-1 rounded-lg border-gray-300 shadow-sm hover:shadow-md transition-all"
+                                >
+                                    <p className="break-all font-semibold text-gray-700 text-sm">{file.name}</p>
+                                    <p className="text-gray-500 text-xs mt-1">{formattedDate}</p>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                            <p className="text-[#b8b8b8] text-2xl">No recent files</p>
+                        </div>
+                        
+                    )}
+
                 </div>
             </div>
 
