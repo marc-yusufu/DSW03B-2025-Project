@@ -255,7 +255,15 @@ export default function Upload(){
             <div className="flex flex-row w-[90%] mt-10 mb-30">
                 <button className="p-2 rounded-lg text-white bg-[#F21111] mr-10 w-[152px]">Cancel</button>
                 <button className="p-2 rounded-lg text-white bg-[#3376F3] w-[152px]">Submit</button>
-                <button onClick={generatePDF} className="p-2 rounded-lg text-white bg-[#3376F3] w-[152px]">Download PDF</button>
+                <button onClick={() => { const canvas = document.getElementById("canvasInput") as HTMLCanvasElement | null;
+                    if (canvas) {
+                        generatePDF(canvas);
+                    }
+                    }}
+                    className="p-2 rounded-lg text-white bg-[#3376F3] w-[152px]"
+                >
+                Download PDF
+                </button>
             </div>
         </div>
         </div>
