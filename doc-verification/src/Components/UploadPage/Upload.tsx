@@ -1,6 +1,6 @@
 import { useState, useRef, createContext, useContext } from "react"
 import NavBarHome from "../Common/NavBarHome";
-import { CloudUpload } from "lucide-react"; 
+import { CarIcon, CloudUpload, DoorClosedIcon } from "lucide-react"; 
 import {jsPDF} from "jspdf";
 
 
@@ -18,6 +18,7 @@ export default function Upload(){
     const canvasInput = document.getElementById('canvasInput') as HTMLCanvasElement;
     const canvasOutput = document.getElementById('canvasOuput') as HTMLCanvasElement;
     const ctxInput = canvasInput.getContext('2d');
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
 
     const [fileName, setFileName] = useState("");
@@ -31,8 +32,8 @@ export default function Upload(){
 
     var uploadDate : Date = new Date();
     const year = uploadDate.getFullYear();
-    const month = uploadDate.getMonth();
-    const day = uploadDate.getDay();
+    const month = String(uploadDate.getMonth() + 1).padStart(2, '0');
+    const day = uploadDate.getDate();
     const formattedDate = `${year}/${month}/${day}`;
 
     const handleInputRef =()=>{
@@ -51,7 +52,7 @@ export default function Upload(){
 
     /*openCV image processing*/
     function processImage(){
-        const src = cv.imread('canvasInput');
+        const src = window.cv.imread('canvasInput');
         const resized = new cv.Mat();
         const denoised = new cv.Mat();
 
@@ -65,10 +66,7 @@ export default function Upload(){
     }
 
     {/*Passing image to a PDF*/}
-    const generatePDF = () =>{
-        const canvas = document.getElementById("canvasInput") as HTMLCanvasElement;
-        if(!canvas) return;
-
+    const generatePDF = (canvas: HTMLCanvasElement) =>{
         const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF({
             orientation: "portrait",
@@ -112,17 +110,18 @@ export default function Upload(){
                     id="fileUpload"
                     onChange={(e)=>{
                         const fileInput = e.target.files?.[0];
-                        if (fileInput){
-                            setFileName(fileInput.name);
-                            setFileSizeInBytes(fileInput.size);
-                            handleUpload();
+                        if (!fileInput) return;
 
-                            const recentFiles = e.target.files ? Array.from(e.target.files).map(file => ({
-                                name: file.name,
-                                lastModified: file.lastModified,
-                            })) : [];
-                            setRecentlyUploaded(prev => [...prev, ...recentFiles]);
-                        }
+                        setFileName(fileInput.name);
+                        setFileSizeInBytes(fileInput.size);
+                        handleUpload();
+
+                        const recentFiles = e.target.files ? Array.from(e.target.files).map(file => ({
+                            name: file.name,
+                            lastModified: file.lastModified,
+                        })) : [];
+                        setRecentlyUploaded(prev => [...prev, ...recentFiles]);
+                        
 
                         {/*openCV section*/}
                         const reader = new FileReader();
@@ -132,19 +131,50 @@ export default function Upload(){
                             img.src = e.target?.result as string;
 
                             img.onload = () =>{
+                                const canvasInput = document.getElementById("canvasInput") as HTMLCanvasElement;
+                                const canvasOuput = document.getElementById("canvasOuput") as HTMLCanvasElement;
+                                const ctxInput = canvasInput.getContext("2d");
+
                                 canvasInput.width = img.width;
                                 canvasInput.height = img.height;
-                                ctxInput?.drawImage(img,0,0);
+                                ctxInput?.drawImage(img, 0, 0);
 
-                                if(cv && cv.imread){
-                                    processImage();
-                                    genereatePDF();
+                                if(window.cv && window.cv.imread){
+                                    const src = window.cv.imread(canvasInput);
+                                    const resized = new window.cv.Mat();
+                                    const denoised = new window.cv.Mat();
+                                    const size = new window.cv.size(300, 300);
+
+                                    window.cv.resize(src, resized, size, 0, 0, window.cv.INTER_AREA);
+                                    window.cv.fastNlMeansDenoisingColored(resized, denoised, 10, 10, 7, 21);
+                                    window.cv.imshow(canvasOuput, denoised);
+
+                                    src.delete();
+                                    resized.delete();
+                                    denoised.delete();
+
+                                    generatePDF(canvasInput);
                                 }else{
-                                    cv['onRuntimeInitialized'] = processImage;
+                                    window.cv['onRuntimeInitialized'] = () =>{
+                                        const src = window.cv.imread(canvasInput);
+                                        const resized = new window.cv.Mat();
+                                        const denoised = new window.cv.Mat();
+                                        const size = new window.cv.size(300, 300);
+
+                                        window.cv.resize(src, resized, size, 0, 0, window.cv.INTER_AREA);
+                                        window.cv.fastNlMeansDenoisingColored(resized, denoised, 10, 10, 7, 21);
+                                        window.cv.imshow(canvasOuput, denoised);
+
+                                        src.delete();
+                                        resized.delete();
+                                        denoised.delete();
+
+                                        generatePDF(canvasInput);
+                                    }
                                 }
                             };
                         };
-                        reader.readAsDataURL(fileInputCV);
+                        reader.readAsDataURL(fileInput);
                     }}/>
                 </div>
                     {/*Recent;y uploaded container*/}

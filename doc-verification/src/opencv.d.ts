@@ -1,9 +1,11 @@
+export {};
+
 declare global {
   interface Window {
     cv: any;
   }
+  const cv: any;
 }
 
-declare const cv: any;
 
-export {};
+
