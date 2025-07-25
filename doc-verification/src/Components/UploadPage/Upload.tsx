@@ -1,6 +1,7 @@
 import { useState, useRef, createContext, useContext } from "react"
 import NavBarHome from "../Common/NavBarHome";
-import { CloudUpload } from "lucide-react";
+import { CloudUpload } from "lucide-react"; 
+import {jsPDF} from "jspdf";
 
 
 export const fileContext = createContext("");
@@ -62,6 +63,22 @@ export default function Upload(){
 
         src.delete(); resized.delete(); denoised.delete();
     }
+
+    {/*Passing image to a PDF*/}
+    const generatePDF = () =>{
+        const canvas = document.getElementById("canvasInput") as HTMLCanvasElement;
+        if(!canvas) return;
+
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF({
+            orientation: "portrait",
+            unit: "px",
+            format: [canvas.width, canvas.height],
+        });
+
+        pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+        pdf.save(fileName+".pdf");
+    };
     
     return(
         <div>
@@ -121,6 +138,7 @@ export default function Upload(){
 
                                 if(cv && cv.imread){
                                     processImage();
+                                    genereatePDF();
                                 }else{
                                     cv['onRuntimeInitialized'] = processImage;
                                 }
@@ -207,6 +225,7 @@ export default function Upload(){
             <div className="flex flex-row w-[90%] mt-10 mb-30">
                 <button className="p-2 rounded-lg text-white bg-[#F21111] mr-10 w-[152px]">Cancel</button>
                 <button className="p-2 rounded-lg text-white bg-[#3376F3] w-[152px]">Submit</button>
+                <button onClick={generatePDF} className="p-2 rounded-lg text-white bg-[#3376F3] w-[152px]">Download PDF</button>
             </div>
         </div>
         </div>
