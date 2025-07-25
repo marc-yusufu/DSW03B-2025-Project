@@ -14,11 +14,9 @@ type uploadedFiles = {
 export default function Upload(){
 
     /*for openCV resizing and denoising*/
-    const fileInputCV = document.getElementById('fileInput') as HTMLInputElement;
-    const canvasInput = document.getElementById('canvasInput') as HTMLCanvasElement;
-    const canvasOutput = document.getElementById('canvasOuput') as HTMLCanvasElement;
-    const ctxInput = canvasInput.getContext('2d');
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const canvasInputRef = useRef<HTMLCanvasElement>(null);
+    const canvasOutputRef = useRef<HTMLCanvasElement>(null);
+
 
 
     const [fileName, setFileName] = useState("");
@@ -37,9 +35,7 @@ export default function Upload(){
     const formattedDate = `${year}/${month}/${day}`;
 
     const handleInputRef =()=>{
-        if(inputRef.current){
-            inputRef.current.click();
-        }
+            inputRef.current?.click();
     };
 
     const handleUpload = () => {
@@ -51,19 +47,24 @@ export default function Upload(){
     };
 
     /*openCV image processing*/
-    function processImage(){
+    const processImage = () =>{
+        if(!canvasInputRef.current || canvasOutputRef.current) return;
         const src = window.cv.imread('canvasInput');
         const resized = new cv.Mat();
         const denoised = new cv.Mat();
+        const size = new cv.Size(100,100);
 
-        const size = new cv.Size(300,300);
-        cv.resize(src, resized, size, 0, 0, cv.INTER_AREA);
-        cv.fastNlMeansDenoisingColored(resized, denoised, 10, 10, 7, 21);
+        window.cv.resize(src, resized, size, 0, 0, window.cv.INTER_AREA);
+        window.cv.fastNlMeansDenoisingColored(resized, denoised, 10, 10, 7, 21);
 
-        cv.imshow('canvasOuput', denoised);
+        window.cv.imshow(canvasInputRef.current, denoised);
 
-        src.delete(); resized.delete(); denoised.delete();
-    }
+        src.delete(); 
+        resized.delete(); 
+        denoised.delete();
+
+        generatePDF(canvasInputRef.current);
+    };
 
     {/*Passing image to a PDF*/}
     const generatePDF = (canvas: HTMLCanvasElement) =>{
@@ -73,8 +74,8 @@ export default function Upload(){
             unit: "px",
             format: [canvas.width, canvas.height],
         });
-
-        pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+        const scale = 0.5;
+        pdf.addImage(imgData, "PNG", 0, 0, canvas.width * scale, canvas.height * scale);
         pdf.save(fileName+".pdf");
     };
     
@@ -108,7 +109,7 @@ export default function Upload(){
                     ref={inputRef}
                     hidden = {true}
                     id="fileUpload"
-                    onChange={(e)=>{
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{
                         const fileInput = e.target.files?.[0];
                         if (!fileInput) return;
 
@@ -131,46 +132,19 @@ export default function Upload(){
                             img.src = e.target?.result as string;
 
                             img.onload = () =>{
-                                const canvasInput = document.getElementById("canvasInput") as HTMLCanvasElement;
-                                const canvasOuput = document.getElementById("canvasOuput") as HTMLCanvasElement;
-                                const ctxInput = canvasInput.getContext("2d");
+                                const canvas = canvasInputRef.current;
+                                if(!canvas) return;
+                                //const canvasOuput = document.getElementById("canvasOuput") as HTMLCanvasElement;
+                                const ctxInput = canvas?.getContext("2d");
 
-                                canvasInput.width = img.width;
-                                canvasInput.height = img.height;
+                                canvas.width = img.width;
+                                canvas.height = img.height;
                                 ctxInput?.drawImage(img, 0, 0);
 
                                 if(window.cv && window.cv.imread){
-                                    const src = window.cv.imread(canvasInput);
-                                    const resized = new window.cv.Mat();
-                                    const denoised = new window.cv.Mat();
-                                    const size = new window.cv.size(300, 300);
-
-                                    window.cv.resize(src, resized, size, 0, 0, window.cv.INTER_AREA);
-                                    window.cv.fastNlMeansDenoisingColored(resized, denoised, 10, 10, 7, 21);
-                                    window.cv.imshow(canvasOuput, denoised);
-
-                                    src.delete();
-                                    resized.delete();
-                                    denoised.delete();
-
-                                    generatePDF(canvasInput);
+                                    processImage();
                                 }else{
-                                    window.cv['onRuntimeInitialized'] = () =>{
-                                        const src = window.cv.imread(canvasInput);
-                                        const resized = new window.cv.Mat();
-                                        const denoised = new window.cv.Mat();
-                                        const size = new window.cv.size(300, 300);
-
-                                        window.cv.resize(src, resized, size, 0, 0, window.cv.INTER_AREA);
-                                        window.cv.fastNlMeansDenoisingColored(resized, denoised, 10, 10, 7, 21);
-                                        window.cv.imshow(canvasOuput, denoised);
-
-                                        src.delete();
-                                        resized.delete();
-                                        denoised.delete();
-
-                                        generatePDF(canvasInput);
-                                    }
+                                    window.cv['onRuntimeInitialized'] = processImage;
                                 }
                             };
                         };
@@ -194,12 +168,16 @@ export default function Upload(){
                     ) : (
                         <div className="h-full w-full flex items-center justify-center">
                             <p className="text-[#b8b8b8] text-2xl">No recent files</p>
-                        </div>
-                        
+                        </div> 
                     )}
 
                 </div>
             </div>
+
+            {/*Canvas elements*/}
+            <canvas ref={canvasInputRef} id="canvasInput" hidden/>
+            <canvas ref={canvasOutputRef} id="canvasOuput" hidden/>
+
 
             <div className="flex justify-start w-[90%]">
                 <h1 className="text-[24px]">File Type</h1>
@@ -255,7 +233,8 @@ export default function Upload(){
             <div className="flex flex-row w-[90%] mt-10 mb-30">
                 <button className="p-2 rounded-lg text-white bg-[#F21111] mr-10 w-[152px]">Cancel</button>
                 <button className="p-2 rounded-lg text-white bg-[#3376F3] w-[152px]">Submit</button>
-                <button onClick={() => { const canvas = document.getElementById("canvasInput") as HTMLCanvasElement | null;
+                <button onClick={() => { 
+                    const canvas = canvasInputRef.current;
                     if (canvas) {
                         generatePDF(canvas);
                     }
