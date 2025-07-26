@@ -34,11 +34,53 @@ export default function Upload(){
     const day = uploadDate.getDate();
     const formattedDate = `${year}/${month}/${day}`;
 
-    const handleInputRef =()=>{
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>{
+        const fileInput = e.target.files?.[0];
+        if (!fileInput) return;
+
+        setFileName(fileInput.name);
+        setFileSizeInBytes(fileInput.size);
+        handleUploadLoading();
+
+        const recentFiles = e.target.files ? Array.from(e.target.files).map(file => ({
+            name: file.name,
+            lastModified: file.lastModified,
+        })) : [];
+        setRecentlyUploaded(prev => [...prev, ...recentFiles]);
+        
+
+        /*openCV section*/
+        const reader = new FileReader();
+
+        reader.onload = (e) =>{
+            const img = new Image();
+            img.src = e.target?.result as string;
+
+            img.onload = () =>{
+                const canvas = canvasInputRef.current;
+                if(!canvas) return;
+                const ctxInput = canvas?.getContext("2d");
+
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctxInput?.drawImage(img, 0, 0);
+
+                if(window.cv && window.cv.imread){
+                    processImage();
+                }else{
+                    window.cv['onRuntimeInitialized'] = processImage;
+                }
+            };
+        };
+        reader.readAsDataURL(fileInput);
+    }
+    
+
+    const handleInputRef =()=>{ 
             inputRef.current?.click();
     };
 
-    const handleUpload = () => {
+    const handleUploadLoading = () => {
         setUploading(true);
         setTimeout(() => {
             setUploading(false);
@@ -47,35 +89,81 @@ export default function Upload(){
     };
 
     /*openCV image processing*/
-    const processImage = () =>{
-        if(!canvasInputRef.current || canvasOutputRef.current) return;
-        const src = window.cv.imread('canvasInput');
+    const processImage = () => {
+        if (!canvasInputRef.current || !canvasOutputRef.current) return;
+
+        const src = window.cv.imread(canvasInputRef.current);
         const resized = new cv.Mat();
+        const gray = new cv.Mat();
         const denoised = new cv.Mat();
-        const size = new cv.Size(100,100);
+        const output = new cv.Mat();
 
+        const size = new window.cv.Size(150, 150);
+
+        // Resize
         window.cv.resize(src, resized, size, 0, 0, window.cv.INTER_AREA);
-        window.cv.fastNlMeansDenoisingColored(resized, denoised, 10, 10, 7, 21);
 
-        window.cv.imshow(canvasInputRef.current, denoised);
+        // Convert to grayscale
+        window.cv.cvtColor(resized, gray, window.cv.COLOR_RGBA2GRAY);
 
-        src.delete(); 
-        resized.delete(); 
+        // Denoise grayscale image
+        window.cv.fastNlMeansDenoising(gray, denoised, 30, 7, 21);
+
+        // Threshold the denoised image
+        window.cv.threshold(denoised, denoised, 127, 255, window.cv.THRESH_BINARY);
+
+        // Convert back to RGBA for displaying
+        window.cv.cvtColor(denoised, output, window.cv.COLOR_GRAY2RGBA);
+
+        // Show the processed image
+        window.cv.imshow(canvasOutputRef.current!, output);
+        console.log("Processing image....")
+        // Wait for canvas to visually update, then generate PDF
+        setTimeout(() => {
+            generatePDF(canvasOutputRef.current!);
+        }, 100);
+
+        // Cleanup
+        src.delete();
+        resized.delete();
+        gray.delete();
         denoised.delete();
-
-        generatePDF(canvasInputRef.current);
+        output.delete();
     };
 
-    {/*Passing image to a PDF*/}
+
+
+    /*Passing image to a PDF*/
     const generatePDF = (canvas: HTMLCanvasElement) =>{
+        const A4_width = 595;
+        const A4_height = 842;
+        const margin = 20;
+
         const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF({
             orientation: "portrait",
             unit: "px",
-            format: [canvas.width, canvas.height],
+            format: [A4_width, A4_height],
         });
-        const scale = 0.5;
-        pdf.addImage(imgData, "PNG", 0, 0, canvas.width * scale, canvas.height * scale);
+
+        const aspectRatio = canvas.width / canvas.height;
+        //allowed w and h within margin
+        const maxWidth = A4_width - margin * 2;
+        const maxHeight = A4_height - margin * 2;
+
+        let imageWidth = maxWidth;
+        let imageHeight = maxWidth / aspectRatio;
+
+        if(imageHeight > maxHeight){
+            imageHeight = maxHeight;
+            imageWidth = maxHeight * aspectRatio;
+        }
+
+        //center image on pdf
+        const x = (A4_width - imageWidth) / 2;
+        const y = (A4_height - imageHeight) / 2;
+
+        pdf.addImage(imgData, "PNG", x, y, imageWidth, imageHeight);
         pdf.save(fileName+".pdf");
     };
     
@@ -109,48 +197,9 @@ export default function Upload(){
                     ref={inputRef}
                     hidden = {true}
                     id="fileUpload"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{
-                        const fileInput = e.target.files?.[0];
-                        if (!fileInput) return;
-
-                        setFileName(fileInput.name);
-                        setFileSizeInBytes(fileInput.size);
-                        handleUpload();
-
-                        const recentFiles = e.target.files ? Array.from(e.target.files).map(file => ({
-                            name: file.name,
-                            lastModified: file.lastModified,
-                        })) : [];
-                        setRecentlyUploaded(prev => [...prev, ...recentFiles]);
-                        
-
-                        {/*openCV section*/}
-                        const reader = new FileReader();
-
-                        reader.onload = (e) =>{
-                            const img = new Image();
-                            img.src = e.target?.result as string;
-
-                            img.onload = () =>{
-                                const canvas = canvasInputRef.current;
-                                if(!canvas) return;
-                                //const canvasOuput = document.getElementById("canvasOuput") as HTMLCanvasElement;
-                                const ctxInput = canvas?.getContext("2d");
-
-                                canvas.width = img.width;
-                                canvas.height = img.height;
-                                ctxInput?.drawImage(img, 0, 0);
-
-                                if(window.cv && window.cv.imread){
-                                    processImage();
-                                }else{
-                                    window.cv['onRuntimeInitialized'] = processImage;
-                                }
-                            };
-                        };
-                        reader.readAsDataURL(fileInput);
-                    }}/>
+                    onChange = {handleFileChange}/>
                 </div>
+
                     {/*Recent;y uploaded container*/}
                 <div className="max-h-[300px] overflow-y-auto border-1 border-gray-200 rounded-lg w-[30%] bg-[#ffffff] p-5">
                     {recentlyUploaded.length > 0 ? (
@@ -176,7 +225,7 @@ export default function Upload(){
 
             {/*Canvas elements*/}
             <canvas ref={canvasInputRef} id="canvasInput" hidden/>
-            <canvas ref={canvasOutputRef} id="canvasOuput" hidden/>
+            <canvas ref={canvasOutputRef} id="canvasOutput" hidden/>
 
 
             <div className="flex justify-start w-[90%]">
@@ -234,7 +283,7 @@ export default function Upload(){
                 <button className="p-2 rounded-lg text-white bg-[#F21111] mr-10 w-[152px]">Cancel</button>
                 <button className="p-2 rounded-lg text-white bg-[#3376F3] w-[152px]">Submit</button>
                 <button onClick={() => { 
-                    const canvas = canvasInputRef.current;
+                    const canvas = canvasOutputRef.current!;
                     if (canvas) {
                         generatePDF(canvas);
                     }
